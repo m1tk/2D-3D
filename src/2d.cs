@@ -2,7 +2,6 @@ using System;
 using Mtype = System.Double;
 
 namespace D2 {
-
     class point : ICloneable {
         const double MinNormal = 2.2250738585072014E-308d;
         public Mtype x {
@@ -95,6 +94,23 @@ namespace D2 {
             Mtype l1 = (rhs.coords.Item1.x-rhs.coords.Item2.x)/(rhs.coords.Item1.y-rhs.coords.Item2.y);
             return (l != l1);
         }
+
+        /// Check if line intersecting with circle
+        public bool is_intersecting(circle c) {
+            Mtype a = this.coords.Item1.y-this.coords.Item2.y;
+            Mtype b = this.coords.Item1.x-this.coords.Item2.x;
+            Mtype c = this.coords.Item1.x*this.coords.Item2.y
+                - this.coords.Item2.x*this.coords.Item1.y;
+
+            return (c.ray > Math.Abs(a*c.r.x + b*c.r.y +c)/ Math.Sqrt(a*a + b*b));
+        }
+
+
+        /// Check if line intersecting with ellipse
+        public bool is_intersecting(ellipse e) {
+            return e.is_intersecting(this);
+        }
+
         /// Check if two lines are perpendicular
         public bool is_perpenduclar(line rhs) {
             Mtype l  = (this.coords.Item1.x-this.coords.Item2.x)/(this.coords.Item1.y-this.coords.Item2.y);
@@ -133,5 +149,71 @@ namespace D2 {
         public bool is_point_inside(point p) {
             return (p.distance(this.r) <= this.ray);
         }
+
+        /// Circle interstion with line
+        public bool is_intersecting(line l) {
+            return l.is_intersecting(this);
+        }
+
+        /// Check if two circles intersecting
+        public bool is_intersecting(circle rhs) {
+            let dist = (this.r.x - rhs.r.x)*(this.r.x-rhs.r.x)
+                    + (this.r.y-rhs.r.y)*(this.r.y-rhs.r.y);
+            let radsum = (this.ray+rhs.ray)*(this.ray+rhs.ray);
+
+            return (dist <= radsum);
+        }
     }
+
+    class ellipse {
+        // center of ellipse
+        public point h {
+            get;
+        }
+        public point k {
+            get;
+        }
+
+        // Semi major axis
+        public Mtype a {
+            get;
+        }
+        public Mtype b {
+            get;
+        }
+
+        public ellipse(int mh, int mk, int ma, int mb) {
+            this.h = mh;
+            this.k = mk;
+            this.a = ma;
+            this.b = mb;
+        }
+
+        public Mtype perimeter() {
+            return 2*Math.PI*Math.Sqrt((this.a*this.a + this.b*this.b)/2);
+        }
+
+        public Mtype surface() {
+            return Math.PI*this.a*this.b;
+        }
+
+        public bool is_point_inside(point p) {
+            // (p.x-h)^2/a^2+(p.y-k)^2/b^2 <= 1
+            return (
+                    (Math.Pow(p.x-h, 2)/a*a)
+                    + (Math.Pow(p.y-k, 2)/b*b)
+                    ) <= 1;
+        }
+
+        public bool is_intersecting(line l) {
+            // http://www.nabla.hr/CS-EllipseAndLine1.htm
+            // D = a^2m^2 + b^2 - c^2
+            // m = change in y / change in x
+            return (
+                    (
+                     (this.a*this.a)
+                     *Math.Pow(Math.Abs((l.coords.Item1.y-l.coords.Item2.y)/(l.coords.Item1.x-l.coords.Item2.x)), 2)
+                    ) + this.b*this.b - this.c*this.c > 0;
+                   )
+        }
 }
